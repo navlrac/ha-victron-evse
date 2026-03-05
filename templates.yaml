@@ -13,7 +13,6 @@
           hub: VictronEVSE
           address: 5016 # Same address as the read sensor
           value: "{{ value | int }}"
-      - delay: "00:00:01"
       - service: homeassistant.update_entity
         target:
           entity_id: sensor.EVSE_ChargingCurrentManual
@@ -51,7 +50,6 @@
                 {% elif option == 'GX Auto' %} 1
                 {% elif option == 'Scheduled' %} 2
                 {% endif %}
-      - delay: "00:00:01"
       - service: homeassistant.update_entity
         target:
           entity_id: sensor.EVSE_ChargeMode
