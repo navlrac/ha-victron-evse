@@ -103,8 +103,7 @@
   - name: "EVSE_SessionTimeAge"
     unique_id: victron_ctrl_session_time_age
     state: >
-      {% set state_val = states('sensor.EVSE_ChargerStatus') %}
-      {% if state_val != '0' %}
+      {% if is_state('binary_sensor.evse_get_status_connected', 'on') %}
       {{ 'Active' }}
       {% else %}
       {% set last = states.sensor.evse_sessiontime.last_changed %}
@@ -133,15 +132,42 @@
       {% set seconds = (total_seconds |int% 60) %}
       {{ '%02d' % hours }}:{{ '%02d' % minutes }}:{{ '%02d' % seconds }}
 
-- switch:
-  - name: "EVSE_Set_StartStopCharging"
-    unique_id: victron_ctrl_start_stop_charging
+- binary_sensor:
+  - name: "EVSE_Get_Status_Connected"
+    unique_id: victron_ctrl_status_connected
+    state: >
+      {% set valid_values = [0] %}
+      {{ states('sensor.EVSE_ChargerStatus') | int not in valid_values }}
+- binary_sensor:
+  - name: "EVSE_Get_StartStopAvailable"
+    unique_id: victron_ctrl_start_stop_available
+    state: >
+      {% set valid_values = [1, 2, 4, 5, 6, 7, 24] %}
+      {{ states('sensor.EVSE_ChargerStatus') | int in valid_values }}
+  - name: "EVSE_Get_StartStopCancellable"
+    unique_id: victron_ctrl_start_stop_cancellable
     state: >
       {% set valid_values = [2, 3] %}
       {{ states('sensor.EVSE_ChargerStatus') | int in valid_values }}
-    availability: >
-      {% set valid_values = [1, 2, 4, 5, 6, 7, 24] %}
-      {{ states('sensor.EVSE_ChargerStatus') | int in valid_values }}
+
+- switch:
+  #- name: "EVSE_Set_StartStopCharging"
+  - name: >-
+      {% set current_name = state_attr(this.entity_id, 'friendly_name') %}
+      {% if current_name is none or current_name == this.entity_id %}
+        EVSE_Set_StartStopCharging
+      {% else %}
+        {% if is_state('binary_sensor.evse_get_startstopavailable', 'off') %}
+          Unavailable
+        {% elif is_state('binary_sensor.evse_get_startstopcancellable', 'on') %}
+          Stop Charging
+        {% else %}
+          Start Charging
+        {% endif %}
+      {% endif %}
+    unique_id: victron_ctrl_start_stop_charging
+    state: "{{ is_state('binary_sensor.evse_get_startstopcancellable', 'on') }}"
+    availability: "{{ is_state('binary_sensor.evse_get_startstopavailable', 'on') }}"
     turn_on:
       service: modbus.write_register
       data:
@@ -154,3 +180,11 @@
         hub: VictronEVSE
         address: 5010 # Start/Stop register address
         value: 0
+    icon: >
+      {% if is_state('binary_sensor.evse_get_startstopavailable', 'off') %}
+        mdi:minus
+      {% elif is_state('binary_sensor.evse_get_startstopcancellable', 'on') %}
+        mdi:stop
+      {% else %}
+        mdi:play
+      {% endif %}
