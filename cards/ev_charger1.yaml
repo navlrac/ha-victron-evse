@@ -7,14 +7,14 @@ cards:
     badges:
       - type: entity
         show_state: true
+        show_icon: false
+        entity: sensor.evse_get_chargerstatus
+      - type: entity
+        show_state: true
         show_icon: true
         entity: select.evse_set_charger_mode
         tap_action:
           action: more-info
-      - type: entity
-        show_state: true
-        show_icon: false
-        entity: sensor.evse_get_chargerstatus
   - type: gauge
     entity: sensor.evse_chargingpower
     max: 22
@@ -29,7 +29,6 @@ cards:
     needle: true
   - type: tile
     entity: switch.evse_set_startstopcharging_2
-    name: Start / Stop
     show_entity_picture: false
     hide_state: true
     vertical: false
@@ -65,20 +64,26 @@ cards:
             show_state: true
             show_icon: false
             entity: sensor.evse_sessiontimeage
-      - show_name: true
-        show_icon: true
-        show_state: true
-        type: glance
-        entities:
-          - entity: sensor.evse_sessiontimelive
+      - type: horizontal-stack
+        cards:
+          - type: tile
+            entity: sensor.evse_sessiontimelive
             name: Duration
-          - entity: sensor.evse_sessionenergy
-            name: Energy
-          - entity: sensor.evse_get_detectedcarphases
-            name: Car Phases
-            show_state: true
+            show_entity_picture: false
+            hide_state: false
+            vertical: true
+            features_position: bottom
+          - type: tile
+            entity: sensor.evse_sessionenergy
+            name: Delivered
+            vertical: true
+            features_position: bottom
+          - type: tile
+            entity: sensor.evse_get_detectedcarphases
+            name: Phases
             icon: mdi:ev-plug-type2
-            show_last_changed: false
+            vertical: true
+            features_position: bottom
   - graph: line
     type: sensor
     entity: sensor.evse_totalenergy
